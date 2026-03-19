@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "norma": {
+      "command": "node",
+      "args": ["/Users/hezhihao/Desktop/persona-memory-mcp/dist/index.js", "--no-http"]
+    }
+  }
+}
