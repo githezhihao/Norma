@@ -60,6 +60,18 @@ export function createHttpApi(engine: PersonaEngine, port: number = DEFAULT_PORT
         handleHealth(engine, res);
       } else if (path === '/api/dashboard' && req.method === 'GET') {
         handleDashboard(engine, res);
+      } else if (path === '/api/init' && req.method === 'POST') {
+        await handleInit(engine, req, res);
+      } else if (path === '/api/recall' && req.method === 'GET') {
+        handleRecall(engine, url, res);
+      } else if (path === '/api/history' && req.method === 'GET') {
+        handleHistory(engine, url, res);
+      } else if (path === '/api/relationship' && req.method === 'GET') {
+        handleRelationship(engine, res);
+      } else if (path === '/api/config' && req.method === 'GET') {
+        handleConfigGet(engine, res);
+      } else if (path === '/api/config' && req.method === 'POST') {
+        await handleConfigSet(engine, req, res);
       } else if (path === '/dashboard' && req.method === 'GET') {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(getDashboardHtml());
@@ -79,8 +91,16 @@ export function createHttpApi(engine: PersonaEngine, port: number = DEFAULT_PORT
     }
   });
 
+  server.on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EADDRINUSE') {
+      process.stderr.write(`[norma] HTTP port ${port} already in use, skipping HTTP API\n`);
+      server.close();
+    } else {
+      process.stderr.write(`[norma] HTTP server error: ${err.message}\n`);
+    }
+  });
+
   server.listen(port, '127.0.0.1', () => {
-    // 静默启动，不打印到 stdout（会干扰 MCP stdio）
     process.stderr.write(`[norma] HTTP API listening on http://127.0.0.1:${port}\n`);
   });
 
@@ -213,6 +233,76 @@ async function handleEvolve(engine: PersonaEngine, req: IncomingMessage, res: Se
       dominance: result.newState.dominance,
     },
     traitChanged: result.traitChanged,
+  });
+}
+
+// ---- Init ----
+
+async function handleInit(engine: PersonaEngine, req: IncomingMessage, res: ServerResponse): Promise<void> {
+  const body = await readBody(req);
+  const ocean: any = {};
+  if (body.openness != null) ocean.openness = body.openness;
+  if (body.conscientiousness != null) ocean.conscientiousness = body.conscientiousness;
+  if (body.extraversion != null) ocean.extraversion = body.extraversion;
+  if (body.agreeableness != null) ocean.agreeableness = body.agreeableness;
+  if (body.neuroticism != null) ocean.neuroticism = body.neuroticism;
+
+  engine.initPersona(body.name, body.description, Object.keys(ocean).length > 0 ? ocean : undefined);
+  const traits = engine.getTraits();
+  json(res, 200, {
+    name: traits?.personalityName,
+    ocean: traits ? { O: traits.openness, C: traits.conscientiousness, E: traits.extraversion, A: traits.agreeableness, N: traits.neuroticism } : null,
+    version: traits?.version,
+  });
+}
+
+// ---- Recall ----
+
+function handleRecall(engine: PersonaEngine, url: URL, res: ServerResponse): void {
+  const query = url.searchParams.get('query') || '';
+  const limit = parseInt(url.searchParams.get('limit') || '10');
+  if (!query) { json(res, 400, { error: 'query parameter required' }); return; }
+  const results = engine.recall(query, limit);
+  json(res, 200, { results });
+}
+
+// ---- History ----
+
+function handleHistory(engine: PersonaEngine, url: URL, res: ServerResponse): void {
+  const layer = (url.searchParams.get('layer') || 'all') as 'trait' | 'state' | 'all';
+  const limit = parseInt(url.searchParams.get('limit') || '20');
+  const summary = url.searchParams.get('summary') === 'true';
+  const history = engine.getHistory(layer, limit);
+
+  const result: any = { history };
+  if (summary) {
+    result.analytics = engine.getEvolutionAnalytics();
+  }
+  json(res, 200, result);
+}
+
+// ---- Relationship ----
+
+function handleRelationship(engine: PersonaEngine, res: ServerResponse): void {
+  json(res, 200, engine.getRelationship());
+}
+
+// ---- Config ----
+
+function handleConfigGet(engine: PersonaEngine, res: ServerResponse): void {
+  json(res, 200, {
+    evolution: engine.getConfig(),
+    llm: engine.getLlmConfig(),
+  });
+}
+
+async function handleConfigSet(engine: PersonaEngine, req: IncomingMessage, res: ServerResponse): Promise<void> {
+  const body = await readBody(req);
+  if (body.evolution) engine.updateConfig(body.evolution);
+  if (body.llm) engine.setLlmConfig(body.llm);
+  json(res, 200, {
+    evolution: engine.getConfig(),
+    llm: engine.getLlmConfig(),
   });
 }
 

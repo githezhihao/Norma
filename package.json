@@ -5,7 +5,8 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "norma": "dist/index.js"
+    "norma": "dist/index.js",
+    "norma-core": "dist/core-entry.js"
   },
   "scripts": {
     "build": "tsc",

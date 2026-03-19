@@ -2,7 +2,13 @@
   "mcpServers": {
     "norma": {
       "command": "node",
-      "args": ["/Users/hezhihao/Desktop/persona-memory-mcp/dist/index.js", "--no-http"]
+      "args": ["/Users/hezhihao/Desktop/persona-memory-mcp/dist/index.js"],
+      "env": {
+        "NORMA_LLM_PROVIDER": "openai",
+        "NORMA_LLM_API_KEY": "sk-411647ea38a94f50ae3f8edbb08974ba",
+        "NORMA_LLM_BASE_URL": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "NORMA_LLM_MODEL": "deepseek-v3.2"
+      }
     }
   }
 }
