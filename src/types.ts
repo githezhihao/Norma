@@ -138,14 +138,25 @@ export const DEFAULT_RELATIONSHIP: RelationshipPattern = {
   updatedAt: Date.now(),
 };
 
+// ---- 情感上下文（用于自然语言生成） ----
+
+export interface EmotionContext {
+  // LLM情感分析结果（如果可用）
+  llmAnalysis?: SentimentAnalysis;
+  // 当前PAD状态
+  padState: PadState;
+  // 人格特质
+  traits: OceanTraits;
+  // 关系上下文
+  relationship?: RelationshipPattern;
+}
+
 // ---- LLM 配置 ----
 
-export type LlmProvider = 'anthropic' | 'openai' | 'ollama' | 'none';
-
 export interface LlmConfig {
-  provider: LlmProvider;
-  apiKey?: string;       // Anthropic / OpenAI
-  model?: string;        // 模型名，如 claude-sonnet-4-20250514, gpt-4o, llama3
-  baseUrl?: string;      // Ollama 或自定义 endpoint
+  provider: 'anthropic' | 'openai' | 'ollama' | 'none';
+  apiKey?: string;
+  model?: string;
+  baseUrl?: string;
   temperature?: number;
 }

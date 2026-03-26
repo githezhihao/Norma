@@ -5,3 +5,23 @@ data/
 *.sqlite-wal
 *.sqlite-shm
 .DS_Store
+.mcp.json
+.env
+.env.*
+*.plist
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# OS
+Thumbs.db
+
+# Test coverage
+coverage/

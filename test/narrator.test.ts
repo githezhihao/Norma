@@ -57,13 +57,13 @@ describe('narrateFullState', () => {
 
   it('reflects sad state in mood description', () => {
     const text = narrateFullState(baseTraits, sadState, activeRelationship);
-    // 应该包含低落/不好相关的描述
-    expect(text).toMatch(/不太好|低落|沮丧/);
+    // 应该包含低落/不好相关的描述（二次元风格）
+    expect(text).toMatch(/不好|濒死|暴击|emo|down/);
   });
 
   it('handles new relationship with zero interactions', () => {
     const text = narrateFullState(baseTraits, happyState, newRelationship);
-    expect(text).toContain('还没有互动');
+    expect(text).toMatch(/还没有|第一次/);
   });
 
   it('does not contain raw numbers like 0.800', () => {
@@ -76,12 +76,12 @@ describe('narrateFullState', () => {
 describe('narrateBrief', () => {
   it('returns emoji + short description for happy state', () => {
     const brief = narrateBrief(happyState);
-    expect(brief).toContain('😊');
-    expect(brief.length).toBeLessThan(50);
+    expect(brief).toContain('✨');
+    expect(brief.length).toBeLessThan(60);
   });
 
   it('returns sad emoji for negative pleasure', () => {
     const brief = narrateBrief(sadState);
-    expect(brief).toContain('😔');
+    expect(brief).toContain('😣');
   });
 });

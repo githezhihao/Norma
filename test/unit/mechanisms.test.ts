@@ -8,8 +8,8 @@ import {
   traitToStateBaseline,
   hedonicAdaptation,
   clamp,
-} from '../src/persona/mechanisms.js';
-import type { PadState, OceanTraits } from '../src/types.js';
+} from '@/persona/mechanisms.js';
+import type { PadState, OceanTraits } from '@/types.js';
 
 describe('clamp', () => {
   it('clamps within range', () => {

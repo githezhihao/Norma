@@ -6,7 +6,8 @@
   "main": "dist/index.js",
   "bin": {
     "norma": "dist/index.js",
-    "norma-core": "dist/core-entry.js"
+    "norma-core": "dist/core-entry.js",
+    "norma-proxy": "dist/proxy-entry.js"
   },
   "scripts": {
     "build": "tsc",
@@ -37,6 +38,7 @@
     "@types/node": "^22.15.3",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
+    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^3.1.2"
   }
 }

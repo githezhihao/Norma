@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { analyzeByRules } from '../src/persona/analyzer.js';
+import { analyzeByRules } from '@/persona/analyzer.js';
 
 describe('规则降级情感分析器', () => {
   it('returns neutral for empty messages', () => {

@@ -1,24 +1,56 @@
 // ============================================================
 // Embedding 生成器
-// 支持 OpenAI / Ollama embedding API，降级到简易 TF-IDF
+// 支持 OpenAI / Ollama embedding API，降级到本地 n-gram
 // ============================================================
 
 import type { LlmConfig } from '../types.js';
 
-// 默认维度（OpenAI text-embedding-3-small = 1536, 但我们可以用更小的）
+// 默认维度
 export const EMBEDDING_DIM = 256;
 
 /**
+ * 获取默认 Embedding 配置
+ * 默认使用本地 n-gram，无需外部 API
+ */
+function getDefaultEmbeddingConfig(): LlmConfig {
+  // 环境变量覆盖
+  const provider = process.env.NORMA_EMBEDDING_PROVIDER;
+  const baseUrl = process.env.NORMA_EMBEDDING_BASE_URL;
+  const model = process.env.NORMA_EMBEDDING_MODEL;
+
+  if (provider === 'ollama') {
+    return {
+      provider: 'ollama',
+      baseUrl: baseUrl || 'http://localhost:11434',
+      model: model || 'nomic-embed-text',
+    };
+  }
+
+  if (provider === 'openai') {
+    return {
+      provider: 'openai',
+      baseUrl,
+      apiKey: process.env.NORMA_EMBEDDING_API_KEY || 'dummy',
+    };
+  }
+
+  // 默认使用本地 n-gram
+  return { provider: 'none' };
+}
+
+/**
  * 生成文本 embedding
- * 优先用 API，降级到本地 TF-IDF
+ * 优先用 API，降级到本地 n-gram
  */
 export async function generateEmbedding(
   text: string,
-  config: LlmConfig | null,
+  config: LlmConfig | null = null,
 ): Promise<Float32Array> {
-  if (config && config.provider !== 'none' && config.apiKey) {
+  const effectiveConfig = config ?? getDefaultEmbeddingConfig();
+
+  if (effectiveConfig.provider !== 'none' && effectiveConfig.apiKey) {
     try {
-      return await generateApiEmbedding(text, config);
+      return await generateApiEmbedding(text, effectiveConfig);
     } catch {
       // 降级到本地
     }

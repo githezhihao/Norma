@@ -11,10 +11,11 @@ import { resolve } from 'node:path';
 // ---- 日志 ----
 const LOG_PATH = resolve(process.env.PERSONA_LOG ?? `${process.env.HOME ?? '.'}/.norma/persona.log`);
 const LOG_JSON = process.env.PERSONA_LOG_FORMAT === 'json';
-const LOG_DEBUG = process.env.PERSONA_DEBUG === '1';
+// 强制启用DEBUG日志进行诊断
+const LOG_DEBUG = true; // process.env.PERSONA_DEBUG === '1';
 const LOG_MAX_BYTES = 5 * 1024 * 1024; // 5MB
 
-function log(level: 'INFO' | 'WARN' | 'ERR' | 'DEBUG', tag: string, msg: string) {
+export function log(level: 'INFO' | 'WARN' | 'ERR' | 'DEBUG', tag: string, msg: string): void {
   if (level === 'DEBUG' && !LOG_DEBUG) return;
   // 简单轮转
   try {
@@ -24,7 +25,17 @@ function log(level: 'INFO' | 'WARN' | 'ERR' | 'DEBUG', tag: string, msg: string)
     }
   } catch { /* file may not exist yet */ }
 
-  const ts = new Date().toISOString().replace('T', ' ').slice(0, 23);
+  // 时间戳：本地时间 + 时区偏移
+  const now = new Date();
+  const offset = now.getTimezoneOffset() * -1;
+  const hours = Math.floor(Math.abs(offset) / 60);
+  const minutes = Math.abs(offset) % 60;
+  const sign = offset >= 0 ? '+' : '-';
+  const tz = `${sign}${hours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}`;
+
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const ts = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ${tz}`;
+
   let line: string;
   if (LOG_JSON) {
     line = JSON.stringify({ ts, level, tag, msg }) + '\n';
@@ -468,7 +479,8 @@ export class PersonaEngine {
 
     if (count > 0 && count % this.config.evolveEveryN === 0) {
       log('INFO', 'auto-evolve', `triggered at msg #${count} (every ${this.config.evolveEveryN})`);
-      const recent = this.getRecentUserMessages(this.config.evolveEveryN);
+      // 只分析最近 evolveEveryN 条消息（当前会话窗口），避免历史消息污染
+      const recent = this.getRecentMessages(this.config.evolveEveryN).map(m => ({ role: m.role, content: m.content }));
       evolveResult = await this.evolve(recent);
     }
 

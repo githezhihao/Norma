@@ -7,10 +7,12 @@ import type { SentimentAnalysis, PadState } from '../types.js';
 
 // 中英文情感词典
 const POSITIVE_WORDS = new Set([
-  // 中文
-  '谢谢', '感谢', '棒', '好的', '不错', '厉害', '优秀', '完美', '喜欢', '爱',
-  '开心', '高兴', '满意', '赞', '牛', '强', '妙', '帅', '美', '酷',
-  '哈哈', '嘻嘻', '嘿嘿', '太好了', '真棒', '辛苦了', '加油',
+  // 中文（2字以上，避免单字误匹配）
+  '谢谢', '感谢', '不错', '厉害', '优秀', '完美', '喜欢',
+  '开心', '高兴', '满意', '加油', '辛苦了',
+  '太棒了', '超棒', '真棒', '真厉害', '好厉害', '真好', '太好了', '真不错', '超级棒',
+  '信任', '努力', '鼓励', '支持', '相信',
+  '哈哈', '嘻嘻', '嘿嘿',
   // English
   'thanks', 'thank', 'great', 'good', 'nice', 'awesome', 'excellent', 'perfect',
   'love', 'like', 'happy', 'wonderful', 'amazing', 'cool', 'brilliant',
@@ -18,14 +20,16 @@ const POSITIVE_WORDS = new Set([
 ]);
 
 const NEGATIVE_WORDS = new Set([
-  // 中文
-  '不行', '不好', '差', '烂', '垃圾', '废', '错', '问题', '失败', '崩溃',
-  '生气', '烦', '讨厌', '无语', '难受', '痛苦', '焦虑', '担心', '害怕',
-  '不满', '失望', '糟糕', '恶心', '愤怒', '郁闷', '累', '烦死了',
+  // 中文（2字以上，避免单字误匹配）
+  '不行', '不好', '垃圾', '失败', '崩溃',
+  '生气', '讨厌', '无语', '难受', '痛苦', '焦虑', '担心', '害怕',
+  '不满', '失望', '糟糕', '恶心', '愤怒', '郁闷', '烦死了',
+  '完全不对', '没理解', '不对', '太差了', '不能用', '搞砸',
+  '太烂了', '差劲', '出错', '犯错', '很烦', '太烦',
   // English
   'bad', 'wrong', 'error', 'fail', 'terrible', 'awful', 'hate', 'angry',
   'frustrated', 'annoying', 'disappointed', 'worried', 'anxious', 'sad',
-  'broken', 'useless', 'stupid', 'ugly', 'no', 'never', 'worst',
+  'broken', 'useless', 'stupid', 'ugly', 'never', 'worst',
 ]);
 
 const INTENSE_MARKERS = ['!', '！', '?!', '！？', '!!', '！！', '???', '？？？'];
@@ -107,10 +111,10 @@ export function analyzeByRules(messages: Array<{ role: string; content: string }
     -1, 1,
   );
 
-  // 话题情感
-  const topicSentiment = totalSentiment > 1 ? 'positive' as const
-    : totalSentiment < -1 ? 'negative' as const
-    : sentimentMagnitude > 2 ? 'mixed' as const
+  // 话题情感（降低阈值，让情绪更敏感）
+  const topicSentiment = totalSentiment > 0 ? 'positive' as const
+    : totalSentiment < 0 ? 'negative' as const
+    : sentimentMagnitude > 1 ? 'mixed' as const
     : 'neutral' as const;
 
   // 互动质量
